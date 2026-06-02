@@ -1,0 +1,19 @@
+README.md
+  s_756d9445d0c262::t_837734bf43bd65 14,35-36,69,71,85,120,128,136,146,154,165,173,187,206-210,212,219,221,275,277,286,292,294
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "b0256c5d6a7e4b0e216c39f4f833b3dfb4493a4b",
+  "prompts": {},
+  "sessions": {
+    "s_756d9445d0c262": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5e0990a2-026f-4bbd-9fe1-1725261d4f7e",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Marcelo Janke <marcelo.janke@mercadolivre.com>"
+    }
+  }
+}
