@@ -11,7 +11,7 @@ A maioria das ferramentas de teste de carga usa o **Closed Model**: um pool fixo
 O **Open Model** funciona diferente: um `time.Ticker` dispara em intervalos fixos e **sempre** injeta um novo usuário virtual (goroutine), independentemente de quantas requisições ainda estão em voo. Se o servidor demorar 2 segundos para responder, as goroutines acumulam — mas a taxa de injeção é mantida. É assim que usuários reais se comportam.
 
 ```
-Closed Model                    Open Model (carga)
+Closed Model                    Open Model (Orion)
 ────────────────                ──────────────────────────────────────
 VU1: ▶──────◀▶──────◀          Tick 1ms:  ▶ lança VU1
 VU2:   ▶──────◀▶───◀           Tick 2ms:  ▶ lança VU2  (VU1 ainda em voo)
@@ -32,8 +32,8 @@ VU3:     ▶────◀▶────◀          Tick 3ms:  ▶ lança VU3
                                  │ N goroutines simultâneas
                     ┌────────────▼─────────────┐
                     │      VU goroutine         │
-                    │  POST /endpoint           │
-                    │  context.WithTimeout(5s)  │
+                    │  METHOD /endpoint         │
+                    │  context.WithTimeout      │
                     │  chan <- result{latency,   │
                     │          status, err}      │
                     └────────────┬──────────────┘
@@ -66,9 +66,9 @@ VU3:     ▶────◀▶────◀          Tick 3ms:  ▶ lança VU3
 
 ```bash
 git clone <repo>
-cd carga
+cd Orion
 go mod tidy
-go build -o carga .
+go build -o orion .
 ```
 
 Ou execute diretamente sem compilar:
@@ -82,7 +82,7 @@ go run . -url http://localhost:8080/api/checkout -rps 100
 ## Uso
 
 ```
-carga -url <endpoint> [flags]
+orion -url <endpoint> [flags]
 ```
 
 ### Flags
@@ -117,7 +117,7 @@ A flag aceita qualquer valor que Go interpreta como `time.Duration`:
 ### Teste básico (GET)
 
 ```bash
-carga -url http://localhost:8080/clubes -method GET
+orion -url http://localhost:8080/clubes -method GET
 ```
 
 Executa 30 segundos a 100 RPS com GET, sem body.
@@ -125,7 +125,7 @@ Executa 30 segundos a 100 RPS com GET, sem body.
 ### POST com payload padrão
 
 ```bash
-carga -url http://localhost:8080/api/checkout
+orion -url http://localhost:8080/api/checkout
 ```
 
 Envia `{"user_id": N, "action": "checkout"}` com `N` incrementando a cada requisição.
@@ -133,7 +133,7 @@ Envia `{"user_id": N, "action": "checkout"}` com `N` incrementando a cada requis
 ### POST com payload customizado
 
 ```bash
-carga -url http://api.staging.internal/v2/order \
+orion -url http://api.staging.internal/v2/order \
       -body '{"item_id": 99, "qty": 1}' \
       -rps 200
 ```
@@ -143,7 +143,7 @@ O mesmo JSON é enviado em todas as requisições.
 ### Aumentar RPS e duração
 
 ```bash
-carga -url http://api.staging.internal/v2/order -rps 500 -duration 2m
+orion -url http://api.staging.internal/v2/order -rps 500 -duration 2m
 ```
 
 500 usuários virtuais por segundo durante 2 minutos.
@@ -151,7 +151,7 @@ carga -url http://api.staging.internal/v2/order -rps 500 -duration 2m
 ### Com Bearer token (JWT, OAuth2, etc.)
 
 ```bash
-carga -url https://api.prod.example.com/checkout \
+orion -url https://api.prod.example.com/checkout \
       -token eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9... \
       -rps 200 \
       -duration 1m
@@ -162,7 +162,7 @@ O header `Authorization: Bearer <token>` é adicionado em todas as requisições
 ### Com Basic Auth
 
 ```bash
-carga -url http://internal-api/endpoint \
+orion -url http://internal-api/endpoint \
       -basic admin:minha_senha_secreta \
       -rps 50
 ```
@@ -170,7 +170,7 @@ carga -url http://internal-api/endpoint \
 ### Com headers customizados (multi-tenant, versionamento, etc.)
 
 ```bash
-carga -url http://api.example.com/checkout \
+orion -url http://api.example.com/checkout \
       -token eyJ... \
       -H "X-Tenant: acme-corp" \
       -H "X-API-Version: 2" \
@@ -184,7 +184,7 @@ A flag `-H` pode ser repetida quantas vezes for necessário.
 ### Timeout agressivo para detectar degradação
 
 ```bash
-carga -url http://api.example.com/slow-endpoint \
+orion -url http://api.example.com/slow-endpoint \
       -rps 100 \
       -timeout 500ms \
       -duration 60s
@@ -203,22 +203,22 @@ Pressione `Ctrl+C` a qualquer momento. A injeção para imediatamente, as requis
 Durante o teste, o progresso é exibido a cada 5 segundos:
 
 ```
-[carga] starting  url=http://api.example.com/checkout  rps=200  duration=1m0s  timeout=5s  tick=5ms  vu/tick=1
-[carga] header    Authorization: Bearer eyJ...
-[carga] Ctrl+C stops injection early and still prints the report.
-[carga]    5s elapsed — injected: 1000 VUs
-[carga]   10s elapsed — injected: 2000 VUs
+[orion] starting  GET http://api.example.com/clubes  rps=200  duration=1m0s  timeout=5s  tick=5ms  vu/tick=1
+[orion] header    Authorization: Bearer eyJ...
+[orion] Ctrl+C stops injection early and still prints the report.
+[orion]    5s elapsed — injected: 1000 VUs
+[orion]   10s elapsed — injected: 2000 VUs
 ...
-[carga] injection ended (1m0.001s) — waiting for 43 goroutines to drain...
+[orion] injection ended (1m0.001s) — waiting for 43 goroutines to drain...
 ```
 
 Ao final, o relatório completo:
 
 ```
 ══════════════════════════════════════════════════════════════════
-  carga — Load Test Report
+  Orion — Load Test Report
 ══════════════════════════════════════════════════════════════════
-  URL:                   http://api.example.com/checkout
+  URL:                   GET http://api.example.com/checkout
   Duration:              1m0.001s
   Target RPS:            200 req/s
   Timeout:               5s
@@ -272,9 +272,9 @@ O dimensionamento garante que conexões TCP ociosas fiquem disponíveis para reu
 
 ---
 
-## Payload enviado
+## Payload padrão
 
-Cada usuário virtual envia um `POST` com `Content-Type: application/json` e o seguinte body:
+Quando `-method` é `POST`, `PUT` ou `PATCH` e `-body` não é fornecido, o Orion gera automaticamente:
 
 ```json
 {
@@ -283,16 +283,15 @@ Cada usuário virtual envia um `POST` com `Content-Type: application/json` e o s
 }
 ```
 
-O `user_id` é um contador atômico global — cada requisição recebe um valor único e incremental durante toda a execução do teste.
+O `user_id` é um contador atômico global — cada requisição recebe um valor único e incremental durante toda a execução do teste. Para payloads customizados, use a flag `-body`.
 
 ---
 
 ## Limitações conhecidas
 
-- **Método fixo:** todas as requisições usam `POST`. Suporte a `GET` e outros métodos pode ser adicionado com a flag `-method`.
-- **Payload fixo:** o body JSON não é parametrizável via CLI. Para payloads dinâmicos, edite a função `runVU` no código-fonte.
+- **Payload estático com `-body`:** o JSON passado via `-body` é enviado idêntico em todas as requisições. Para payloads dinâmicos por requisição, edite a função `runVU` no código-fonte.
 - **Sem ramp-up:** a injeção começa imediatamente no RPS alvo. Para simular aquecimento gradual, execute múltiplas instâncias em sequência com RPS crescente.
-- **Sem suporte a HTTP/2:** o `Transport` usa HTTP/1.1 por padrão. Para HTTP/2 remova o campo `DisableCompression` e defina `ForceAttemptHTTP2: true`.
+- **Sem suporte a HTTP/2:** o `Transport` usa HTTP/1.1 por padrão. Para HTTP/2, defina `ForceAttemptHTTP2: true` no `http.Transport` em `buildClient()`.
 
 ---
 
