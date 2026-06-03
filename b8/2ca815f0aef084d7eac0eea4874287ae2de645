@@ -1,0 +1,55 @@
+worker.go
+  s_6418fc0a377e93::t_1e52c5e428ac6c 1-91
+main.go
+  s_e8f5f72cddc4fa::t_1aaeb1325cc32b 78-80
+  s_6418fc0a377e93::t_0417baac5f536d 26-27,32,43,54-56,63,85-90,93-113,118-122,124
+  s_0a0413bffaf25f::t_23c54d883061d4 29,33-34,37,52-53,59-62
+  s_6418fc0a377e93::t_c3d42cf4e0c96d 114
+.gitignore
+  s_6418fc0a377e93::t_cc7b6bfed651fc 6-7
+  h_8051ea80dd241d 4-5,8
+report.go
+  s_6418fc0a377e93::t_b1bda3c4d7942e 4,14-16
+  s_6418fc0a377e93::t_a15a6f9cd0fdb2 1-3,5-13,17-222
+collector.go
+  s_6418fc0a377e93::t_56d4cf122910c0 1-117
+config.go
+  s_6418fc0a377e93::t_967bb7f1c1069d 1-105
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "b82ca815f0aef084d7eac0eea4874287ae2de645",
+  "prompts": {},
+  "humans": {
+    "h_8051ea80dd241d": {
+      "author": "Marcelo Janke <marcelo.janke@mercadolivre.com>"
+    }
+  },
+  "sessions": {
+    "s_0a0413bffaf25f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a9514b37-4f72-4122-a2fb-ad6bc1fd55de",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Marcelo Janke <marcelo.janke@mercadolivre.com>"
+    },
+    "s_6418fc0a377e93": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1233bb39-fe0b-45b2-9c3a-3cbf946ba1ff",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Marcelo Janke <marcelo.janke@mercadolivre.com>"
+    },
+    "s_e8f5f72cddc4fa": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "97b974c8-595a-4f28-9d58-3fc69c18a583",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Marcelo Janke <marcelo.janke@mercadolivre.com>"
+    }
+  }
+}
