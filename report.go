@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-//go:embed template.html
+//go:embed templates/report.html
 var htmlReportTemplate string
 
 // ── Terminal report ────────────────────────────────────────────────────────────

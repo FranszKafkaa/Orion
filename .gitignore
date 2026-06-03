@@ -1,8 +1,15 @@
-carga
-*.json
-.claude
+# Binaries
+/Orion
+/orion
+/carga
+/carga-*
 
-carga-*
-Orion
+# Generated reports
 orion-report-*.html
 *report.html
+
+# Local config / test data
+*.json
+
+# IDE / tooling
+.claude/
