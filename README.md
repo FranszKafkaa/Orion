@@ -148,6 +148,17 @@ orion -url http://api.staging.internal/v2/order -rps 500 -duration 2m
 
 500 usuários virtuais por segundo durante 2 minutos.
 
+### Ramp-up gradual
+
+```bash
+orion -url http://api.staging.internal/v2/order \
+      -rps 1000 \
+      -ramp-up 30s \
+      -duration 90s
+```
+
+Sobe linearmente de 0 até 1000 RPS nos primeiros 30 s, depois mantém a taxa pelos 60 s restantes. Útil para aquecimento de pool de conexões e JVM warm-up.
+
 ### Com Bearer token (JWT, OAuth2, etc.)
 
 ```bash
@@ -287,10 +298,66 @@ O `user_id` é um contador atômico global — cada requisição recebe um valor
 
 ---
 
+## Ambiente de execução e alto RPS
+
+### Serviços rodando no Colima / Docker Desktop
+
+Quando o serviço alvo está em um container local (Colima, Docker Desktop), `localhost` aponta para o Mac — não para a VM. Use o IP da VM diretamente:
+
+```bash
+# Colima
+colima status   # mostra o endereço, normalmente 192.168.64.2
+orion -url http://192.168.64.2:8080/clubes -method GET -rps 100
+
+# Docker Desktop no Mac expõe as portas via localhost normalmente
+```
+
+### Limite de RPS em ambientes virtualizados
+
+O Colima adiciona três camadas de virtualização entre o Orion e o container:
+
+```
+Orion (macOS) → NAT virtual → VM Linux → docker bridge → container
+```
+
+Na prática, isso limita o throughput útil a **~1.000–2.000 RPS** antes de o gargalo ser a rede virtualizada, não o serviço. Para testes acima disso, use uma das abordagens abaixo.
+
+**Opção 1 — compilar para Linux e rodar dentro da VM (zero overhead de rede):**
+
+```bash
+GOOS=linux GOARCH=arm64 go build -o orion-linux-arm64 .
+colima ssh -- /tmp/orion-linux-arm64 -url http://localhost:8080/clubes -rps 5000 -duration 60s
+```
+
+**Opção 2 — rodar contra staging/produção diretamente:**
+
+```bash
+orion -url https://api.internal.meli.com/clubes \
+      -token eyJ... \
+      -rps 10000 \
+      -duration 60s
+```
+
+Elimina toda a virtualização local e mede latência real de rede.
+
+### Diagnóstico: todas as requisições retornam HTTP 500
+
+Se o navegador consegue acessar o endpoint mas o Orion retorna 100 % de `http_500`, o servidor está recebendo as requisições mas falta algum header obrigatório. Use o DevTools (F12 → Network → clique na requisição) para comparar os headers, ou copie como cURL (botão direito → "Copy as cURL") e identifique o que está faltando.
+
+Headers mais comuns de adicionar:
+
+```bash
+orion -url http://localhost:8080/clubes -method GET \
+      -token eyJhbGci...               \   # Bearer token
+      -H "X-Tenant: mla"               \   # header customizado
+      -H "Accept: application/json"
+```
+
+---
+
 ## Limitações conhecidas
 
 - **Payload estático com `-body`:** o JSON passado via `-body` é enviado idêntico em todas as requisições. Para payloads dinâmicos por requisição, edite a função `runVU` no código-fonte.
-- **Sem ramp-up:** a injeção começa imediatamente no RPS alvo. Para simular aquecimento gradual, execute múltiplas instâncias em sequência com RPS crescente.
 - **Sem suporte a HTTP/2:** o `Transport` usa HTTP/1.1 por padrão. Para HTTP/2, defina `ForceAttemptHTTP2: true` no `http.Transport` em `buildClient()`.
 
 ---
