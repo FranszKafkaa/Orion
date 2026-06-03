@@ -1,0 +1,28 @@
+template.html
+  s_6418fc0a377e93::t_472d2c3bdd70d5 1-230
+.gitignore
+  h_8051ea80dd241d 8
+report.go
+  h_8051ea80dd241d 190
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "1c595160d84055acfba57624ca2905572a4fcf64",
+  "prompts": {},
+  "humans": {
+    "h_8051ea80dd241d": {
+      "author": "Marcelo Janke <marcelo.janke@mercadolivre.com>"
+    }
+  },
+  "sessions": {
+    "s_6418fc0a377e93": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1233bb39-fe0b-45b2-9c3a-3cbf946ba1ff",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Marcelo Janke <marcelo.janke@mercadolivre.com>"
+    }
+  }
+}
