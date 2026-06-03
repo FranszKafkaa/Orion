@@ -1,0 +1,20 @@
+README.md
+  s_12061a688c0b69::t_65610dd99a5ec8 151-161
+  s_12061a688c0b69::t_490c060a5baaab 301-357
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "98f444e18b04a87df9207993e7513af6f61b8c52",
+  "prompts": {},
+  "sessions": {
+    "s_12061a688c0b69": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "79d9f21f-1052-4115-973c-2a1d5666389a",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Marcelo Janke <marcelo.janke@mercadolivre.com>"
+    }
+  }
+}
