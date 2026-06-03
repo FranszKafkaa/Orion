@@ -1,3 +1,8 @@
 carga
 *.json
 .claude
+
+carga-*
+Orion
+orion-report-*.html
+*.html
