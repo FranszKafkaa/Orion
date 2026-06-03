@@ -140,8 +140,8 @@ func (c *collector) generateHTMLReport(cfg *config, elapsed time.Duration) (stri
 	}
 	sort.Slice(errRows, func(i, j int) bool { return errRows[i].Key < errRows[j].Key })
 
-	var timeLabels        []string
-	var rpsVals, errVals  []float64
+	var timeLabels []string
+	var rpsVals, errVals []float64
 	var p50Vals, p95Vals, p99Vals []float64
 	for _, s := range c.snapshots {
 		timeLabels = append(timeLabels, fmt.Sprintf("%ds", s.elapsed))
@@ -187,7 +187,7 @@ func (c *collector) generateHTMLReport(cfg *config, elapsed time.Duration) (stri
 		P99DataJSON:    toJS(p99Vals),
 	}
 
-	reportPath := fmt.Sprintf("orion-report-%s.html", time.Now().Format("20060102-150405"))
+	reportPath := fmt.Sprintf("orion-%s-report.html", time.Now().Format("20060102-150405"))
 	f, err := os.Create(reportPath)
 	if err != nil {
 		return "", fmt.Errorf("create file: %w", err)
@@ -219,4 +219,3 @@ func formatµs(µs int64) string {
 		return fmt.Sprintf("%.3f s", float64(µs)/1_000_000)
 	}
 }
-
