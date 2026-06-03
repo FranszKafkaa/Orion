@@ -1,0 +1,21 @@
+report.go
+  s_2415580ddb4905::t_fa8f4c7c583efa 15
+.gitignore
+  s_2415580ddb4905::t_195010dcab6243 1-5,7,9-15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "87e4db70c6b8b168eb6643ffd7256ffec70e840d",
+  "prompts": {},
+  "sessions": {
+    "s_2415580ddb4905": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "27436be4-d75e-450d-9db6-a88d88b6818f",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Marcelo Janke <marcelo.janke@mercadolivre.com>"
+    }
+  }
+}
