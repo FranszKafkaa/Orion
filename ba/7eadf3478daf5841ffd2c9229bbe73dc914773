@@ -1,0 +1,30 @@
+templates/report.html
+  s_d260f2a8ee7a30::t_2841dc2e943c19 1-239
+report.go
+  s_d260f2a8ee7a30::t_9e432ebe6efd18 153-163
+  s_d260f2a8ee7a30::t_a40aff2fab8e54 280
+  s_d260f2a8ee7a30::t_42ed74ca3516fd 279,281-286
+  s_d260f2a8ee7a30::t_7f16f9b1c76800 54-63
+  s_d260f2a8ee7a30::t_ddd2afd3741b90 206-212
+  s_d260f2a8ee7a30::t_1f7ed7b27c55a9 14-15
+  s_d260f2a8ee7a30::t_2712368c9bd106 287-290
+  s_d260f2a8ee7a30::t_0267e5d4e1bdca 106-114
+.gitignore
+  s_d260f2a8ee7a30::t_e3008193c31fa1 10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "ba7eadf3478daf5841ffd2c9229bbe73dc914773",
+  "prompts": {},
+  "sessions": {
+    "s_d260f2a8ee7a30": {
+      "agent_id": {
+        "tool": "github-copilot-cli",
+        "id": "12b84c51-566c-4741-bbad-143a74786c02",
+        "model": "unknown"
+      },
+      "human_author": "Marcelo Janke <marcelo.janke@mercadolivre.com>"
+    }
+  }
+}
