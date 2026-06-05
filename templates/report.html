@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{.Title}}</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #0d1117;
+    color: #c9d1d9;
+    min-height: 100vh;
+  }
+
+  .container { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+  /* ── Header ── */
+  header {
+    margin-bottom: 2rem;
+    border-bottom: 1px solid #21262d;
+    padding-bottom: 1.5rem;
+  }
+  header h1    { font-size: 2rem; color: #00d4aa; letter-spacing: -0.5px; }
+  .subtitle    { color: #8b949e; margin-top: .25rem; font-size: .9rem; }
+  .meta        { color: #8b949e; font-size: .8rem; margin-top: .5rem; font-family: monospace; }
+
+  /* ── Summary cards ── */
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  .card              { background: #161b22; border: 1px solid #21262d; border-radius: 8px; padding: 1.25rem; }
+  .card-label        { font-size: .7rem; color: #8b949e; text-transform: uppercase; letter-spacing: .8px; }
+  .card-value        { font-size: 1.65rem; font-weight: 700; color: #e6edf3; margin-top: .4rem; font-variant-numeric: tabular-nums; }
+  .card-value.green  { color: #3fb950; }
+  .card-value.yellow { color: #d29922; }
+
+  /* ── Charts ── */
+  .charts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  @media (max-width: 760px) { .charts { grid-template-columns: 1fr; } }
+
+  /* ── Shared panel style ── */
+  .chart-box, .section {
+    background: #161b22;
+    border: 1px solid #21262d;
+    border-radius: 8px;
+    padding: 1.25rem;
+  }
+  .section   { margin-bottom: 1.5rem; }
+  .chart-box h2, .section h2 {
+    font-size: .7rem;
+    color: #8b949e;
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    margin-bottom: 1rem;
+  }
+
+  /* ── Tables ── */
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: .55rem .75rem; text-align: left; border-bottom: 1px solid #21262d; font-size: .85rem; }
+  th { color: #8b949e; font-weight: 500; }
+  td { font-family: monospace; color: #e6edf3; }
+  td.num { text-align: right; }
+  tr:last-child th, tr:last-child td { border-bottom: none; }
+  .err-table td:first-child { text-align: left; color: #f85149; }
+  .req-count { color: #8b949e; font-size: .78rem; }
+
+  /* ── Config grid ── */
+  .config-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: .75rem; }
+  .ck { font-size: .7rem; color: #8b949e; text-transform: uppercase; letter-spacing: .6px; }
+  .cv { font-family: monospace; color: #e6edf3; font-size: .85rem; margin-top: .2rem; word-break: break-all; }
+
+  footer { text-align: center; color: #30363d; font-size: .75rem; padding: 2rem 0 1rem; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <h1>⚡ Orion</h1>
+    <p class="subtitle">Load Test Report</p>
+    <p class="meta">{{.Method}} {{.URL}} &nbsp;·&nbsp; {{.Date}}</p>
+  </header>
+
+  <div class="cards">
+    <div class="card">
+      <div class="card-label">Total Requests</div>
+      <div class="card-value">{{.TotalReqs}}</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Success Rate</div>
+      <div class="card-value green">{{.SuccessRate}}</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Actual RPS</div>
+      <div class="card-value">{{.ActualRPS}}</div>
+    </div>
+    <div class="card">
+      <div class="card-label">p99 Latency</div>
+      <div class="card-value yellow">{{.LatencyP99}}</div>
+    </div>
+  </div>
+
+  {{if .HasSnapshots}}
+  <div class="charts">
+    <div class="chart-box">
+      <h2>Throughput (req/s)</h2>
+      <canvas id="rpsChart"></canvas>
+    </div>
+    <div class="chart-box">
+      <h2>Latency Percentiles (ms)</h2>
+      <canvas id="latencyChart"></canvas>
+    </div>
+  </div>
+  {{end}}
+
+  <div class="section">
+    <h2>Latency Distribution</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Percentile</th>
+          <th style="text-align:right">Latency</th>
+          <th style="text-align:right">Requests (&ge; threshold)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><th>min</th><td class="num">{{.LatencyMin}}</td><td class="num req-count">{{.LatencyMinCount}}</td></tr>
+        <tr><th>p50 (median)</th><td class="num">{{.LatencyP50}}</td><td class="num req-count">{{.LatencyP50Count}}</td></tr>
+        <tr><th>p95</th><td class="num">{{.LatencyP95}}</td><td class="num req-count">{{.LatencyP95Count}}</td></tr>
+        <tr><th>p99</th><td class="num">{{.LatencyP99}}</td><td class="num req-count">{{.LatencyP99Count}}</td></tr>
+        <tr><th>p99.9</th><td class="num">{{.LatencyP999}}</td><td class="num req-count">{{.LatencyP999Count}}</td></tr>
+        <tr><th>max</th><td class="num">{{.LatencyMax}}</td><td class="num req-count">{{.LatencyMaxCount}}</td></tr>
+        <tr><th>mean</th><td class="num">{{.LatencyMean}}</td><td class="num req-count">{{.LatencyMeanCount}}</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2>Test Configuration</h2>
+    <div class="config-grid">
+      <div><div class="ck">URL</div><div class="cv">{{.URL}}</div></div>
+      <div><div class="ck">Method</div><div class="cv">{{.Method}}</div></div>
+      <div><div class="ck">Target RPS</div><div class="cv">{{.TargetRPS}} req/s</div></div>
+      <div><div class="ck">Ramp-up</div><div class="cv">{{.RampUp}}</div></div>
+      <div><div class="ck">Duration</div><div class="cv">{{.Duration}}</div></div>
+      <div><div class="ck">Timeout</div><div class="cv">{{.Timeout}}</div></div>
+    </div>
+  </div>
+
+  {{if .HasErrors}}
+  <div class="section">
+    <h2>Errors</h2>
+    <table class="err-table">
+      <thead><tr><th style="text-align:left">Type</th><th style="text-align:right">Count</th></tr></thead>
+      <tbody>
+        {{range .ErrorRows}}
+        <tr><td>{{.Key}}</td><td class="num">{{.Count}}</td></tr>
+        {{end}}
+      </tbody>
+    </table>
+  </div>
+  {{end}}
+
+  <footer>Generated by Orion &nbsp;·&nbsp; {{.Date}}</footer>
+
+</div>
+
+{{if .HasSnapshots}}
+<script>
+  const _labels = {{.TimeLabelsJSON}};
+  const _rps    = {{.RPSDataJSON}};
+  const _err    = {{.ErrDataJSON}};
+  const _p50    = {{.P50DataJSON}};
+  const _p95    = {{.P95DataJSON}};
+  const _p99    = {{.P99DataJSON}};
+
+  const grid = 'rgba(48,54,61,0.7)', tick = '#8b949e';
+
+  const baseScales = {
+    x: { ticks: { color: tick, maxTicksLimit: 12 }, grid: { color: grid } },
+    y: { beginAtZero: true, ticks: { color: tick }, grid: { color: grid } },
+  };
+
+  const baseOpts = {
+    responsive: true,
+    animation: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: { legend: { labels: { color: tick, boxWidth: 12, padding: 16 } } },
+    scales: baseScales,
+  };
+
+  new Chart(document.getElementById('rpsChart'), {
+    type: 'line',
+    data: {
+      labels: _labels,
+      datasets: [
+        { label: 'success/s', data: _rps, borderColor: '#3fb950', backgroundColor: 'rgba(63,185,80,.12)',
+          fill: true, tension: .35, pointRadius: 2, borderWidth: 2 },
+        { label: 'errors/s',  data: _err, borderColor: '#f85149', backgroundColor: 'rgba(248,81,73,.12)',
+          fill: true, tension: .35, pointRadius: 2, borderWidth: 2 },
+      ],
+    },
+    options: baseOpts,
+  });
+
+  new Chart(document.getElementById('latencyChart'), {
+    type: 'line',
+    data: {
+      labels: _labels,
+      datasets: [
+        { label: 'p50', data: _p50, borderColor: '#4ecdc4', tension: .35, pointRadius: 2, borderWidth: 2 },
+        { label: 'p95', data: _p95, borderColor: '#f7dc6f', tension: .35, pointRadius: 2, borderWidth: 2 },
+        { label: 'p99', data: _p99, borderColor: '#f85149', tension: .35, pointRadius: 2, borderWidth: 2 },
+      ],
+    },
+    options: {
+      ...baseOpts,
+      scales: {
+        ...baseScales,
+        y: { ...baseScales.y, title: { display: true, text: 'ms', color: tick } },
+      },
+    },
+  });
+</script>
+{{end}}
+
+</body>
+</html>

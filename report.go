@@ -11,6 +11,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	hdrhistogram "github.com/HdrHistogram/hdrhistogram-go"
 )
 
 //go:embed templates/report.html
@@ -49,12 +51,16 @@ func (c *collector) report(cfg *config, elapsed time.Duration) {
 
 	if c.hist.TotalCount() > 0 {
 		section("LATENCY")
-		row("min:", formatµs(c.hist.Min()))
-		row("p50  (median):", formatµs(c.hist.ValueAtQuantile(50)))
-		row("p95:", formatµs(c.hist.ValueAtQuantile(95)))
-		row("p99:", formatµs(c.hist.ValueAtQuantile(99)))
-		row("p99.9:", formatµs(c.hist.ValueAtQuantile(99.9)))
-		row("max:", formatµs(c.hist.Max()))
+		latencyRow := func(label string, µs int64, count int64) {
+			fmt.Printf("  %-22s %-16s (%d reqs)\n", label, formatµs(µs), count)
+		}
+		total := c.hist.TotalCount()
+		latencyRow("min:", c.hist.Min(), total)
+		latencyRow("p50  (median):", c.hist.ValueAtQuantile(50), countAtOrAbove(c.hist, total, 50))
+		latencyRow("p95:", c.hist.ValueAtQuantile(95), countAtOrAbove(c.hist, total, 95))
+		latencyRow("p99:", c.hist.ValueAtQuantile(99), countAtOrAbove(c.hist, total, 99))
+		latencyRow("p99.9:", c.hist.ValueAtQuantile(99.9), countAtOrAbove(c.hist, total, 99.9))
+		latencyRow("max:", c.hist.Max(), 1)
 		row("mean:", formatµs(int64(c.hist.Mean())))
 	}
 
@@ -97,6 +103,15 @@ type htmlReportData struct {
 	LatencyP999  string
 	LatencyMax   string
 	LatencyMean  string
+
+	LatencyMinCount  int64
+	LatencyP50Count  int64
+	LatencyP95Count  int64
+	LatencyP99Count  int64
+	LatencyP999Count int64
+	LatencyMaxCount  int64
+	LatencyMeanCount int64
+
 	HasErrors    bool
 	ErrorRows    []errorRow
 	HasSnapshots bool
@@ -133,6 +148,17 @@ func (c *collector) generateHTMLReport(cfg *config, elapsed time.Duration) (stri
 			return "n/a"
 		}
 		return formatµs(µs)
+	}
+
+	var histTotal int64
+	if c.hist.TotalCount() > 0 {
+		histTotal = c.hist.TotalCount()
+	}
+	reqCount := func(quantile float64) int64 {
+		if histTotal == 0 {
+			return 0
+		}
+		return countAtOrAbove(c.hist, histTotal, quantile)
 	}
 
 	var errRows []errorRow
@@ -177,6 +203,13 @@ func (c *collector) generateHTMLReport(cfg *config, elapsed time.Duration) (stri
 		LatencyP999:    latency(c.hist.ValueAtQuantile(99.9)),
 		LatencyMax:     latency(c.hist.Max()),
 		LatencyMean:    latency(int64(c.hist.Mean())),
+		LatencyMinCount:  histTotal,
+		LatencyP50Count:  reqCount(50),
+		LatencyP95Count:  reqCount(95),
+		LatencyP99Count:  reqCount(99),
+		LatencyP999Count: reqCount(99.9),
+		LatencyMaxCount:  1,
+		LatencyMeanCount: histTotal,
 		HasErrors:      len(errRows) > 0,
 		ErrorRows:      errRows,
 		HasSnapshots:   len(c.snapshots) > 0,
@@ -242,6 +275,18 @@ func folderExists(path string) bool {
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
+
+// countAtOrAbove returns the approximate number of requests at or above the given percentile.
+func countAtOrAbove(_ *hdrhistogram.Histogram, total int64, quantile float64) int64 {
+	if total == 0 || quantile <= 0 {
+		return total
+	}
+	n := int64(float64(total) * (1.0 - quantile/100.0))
+	if n < 1 {
+		return 1
+	}
+	return n
+}
 
 func formatµs(µs int64) string {
 	switch {
