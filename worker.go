@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-var vuSeq int64 // monotonic counter; gives each VU a unique, stable user_id
+var vuSeq atomic.Int64 // monotonic counter; gives each VU a unique, stable user_id
 
 // buildClient returns an *http.Client tuned for high-concurrency load testing.
 // Pool sized at 2×rps: at rps req/s with ~100ms p99, peak connections ≈ rps×0.1.
@@ -37,7 +37,7 @@ func runVU(client *http.Client, cfg *config, ch chan<- result) {
 	case cfg.body != "":
 		bodyReader = strings.NewReader(cfg.body)
 	case methodHasBody(cfg.method):
-		uid := atomic.AddInt64(&vuSeq, 1)
+		uid := vuSeq.Add(1)
 		b, _ := json.Marshal(struct {
 			UserID int64  `json:"user_id"`
 			Action string `json:"action"`
@@ -49,6 +49,7 @@ func runVU(client *http.Client, cfg *config, ch chan<- result) {
 	defer cancel()
 
 	req, err := http.NewRequestWithContext(ctx, cfg.method, cfg.url, bodyReader)
+	//fmt.Println(req)
 	if err != nil {
 		ch <- result{err: err}
 		return
@@ -63,6 +64,7 @@ func runVU(client *http.Client, cfg *config, ch chan<- result) {
 	}
 
 	start := time.Now()
+
 	resp, err := client.Do(req)
 	latency := time.Since(start)
 

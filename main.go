@@ -60,6 +60,7 @@ injection:
 			accumulator += currentRPS(cfg.rps, cfg.rampUp, elapsed) * tickDur.Seconds()
 			toFire := int(accumulator)
 			accumulator -= float64(toFire)
+
 			for range toFire {
 				wg.Add(1)
 				atomic.AddInt64(&injected, 1)

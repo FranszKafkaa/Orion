@@ -30,15 +30,16 @@ type config struct {
 func parseFlags() *config {
 	var extra headerFlags
 
-	urlFlag     := flag.String("url", "http://localhost:8080/api/checkout", "endpoint under test")
-	methodFlag  := flag.String("method", "POST", "HTTP method (GET, POST, PUT, PATCH, DELETE, HEAD)")
-	bodyFlag    := flag.String("body", "", "raw request body (JSON); omit to use default {user_id, action} payload")
-	rpsFlag     := flag.Int("rps", 100, "virtual users injected per second (peak rate)")
-	rampUpFlag  := flag.Duration("ramp-up", 0, "linear ramp-up duration (e.g. 30s); default = full duration")
-	durFlag     := flag.Duration("duration", 30*time.Second, "total test duration (e.g. 30s, 2m)")
+	urlFlag := flag.String("url", "http://localhost:8080/api/checkout", "endpoint under test")
+	deleteReportsFlag := flag.Bool("deleteReports", false, "Delete all reports htmls")
+	methodFlag := flag.String("method", "GET", "HTTP method (GET, POST, PUT, PATCH, DELETE, HEAD)")
+	bodyFlag := flag.String("body", "", "raw request body (JSON); omit to use default {user_id, action} payload")
+	rpsFlag := flag.Int("rps", 100, "virtual users injected per second (peak rate)")
+	rampUpFlag := flag.Duration("ramp-up", 0, "linear ramp-up duration (e.g. 30s); default = full duration")
+	durFlag := flag.Duration("duration", 30*time.Second, "total test duration (e.g. 30s, 2m)")
 	timeoutFlag := flag.Duration("timeout", 5*time.Second, "per-request hard deadline")
-	tokenFlag   := flag.String("token", "", "Bearer token → Authorization: Bearer <token>")
-	basicFlag   := flag.String("basic", "", "Basic auth as user:pass")
+	tokenFlag := flag.String("token", "", "Bearer token → Authorization: Bearer <token>")
+	basicFlag := flag.String("basic", "", "Basic auth as user:pass")
 	flag.Var(&extra, "H", "extra header as 'Key: Value' (repeatable)")
 
 	flag.Usage = func() {
@@ -53,6 +54,10 @@ func parseFlags() *config {
 	}
 
 	flag.Parse()
+
+	if *deleteReportsFlag {
+		deleteReportFlags()
+	}
 
 	method := strings.ToUpper(*methodFlag)
 	validMethods := map[string]bool{

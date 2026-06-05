@@ -90,7 +90,7 @@ orion -url <endpoint> [flags]
 | Flag | Tipo | Padrão | Descrição |
 |---|---|---|---|
 | `-url` | string | `http://localhost:8080/api/checkout` | Endpoint alvo do teste |
-| `-method` | string | `POST` | Método HTTP (`GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `HEAD`) |
+| `-method` | string | `GET` | Método HTTP (`GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `HEAD`) |
 | `-body` | string | — | Body da requisição em JSON literal. Omitir usa o payload padrão `{"user_id": N, "action": "checkout"}` para POST/PUT/PATCH. GET e outros métodos sem body não enviam nada. |
 | `-rps` | int | `100` | Usuários virtuais injetados por segundo |
 | `-duration` | duration | `30s` | Tempo total de execução do teste |

@@ -3,6 +3,7 @@ package main
 import (
 	_ "embed"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"html/template"
 	"os"
@@ -187,7 +188,11 @@ func (c *collector) generateHTMLReport(cfg *config, elapsed time.Duration) (stri
 		P99DataJSON:    toJS(p99Vals),
 	}
 
-	reportPath := fmt.Sprintf("orion-%s-report.html", time.Now().Format("20060102-150405"))
+	if !folderExists("./reports") {
+		os.Mkdir("reports", 0700)
+	}
+
+	reportPath := fmt.Sprintf("reports/orion-%s-report.html", time.Now().Format("20060102-150405"))
 	f, err := os.Create(reportPath)
 	if err != nil {
 		return "", fmt.Errorf("create file: %w", err)
@@ -203,6 +208,37 @@ func (c *collector) generateHTMLReport(cfg *config, elapsed time.Duration) (stri
 		return reportPath, nil
 	}
 	return abs, nil
+}
+
+func deleteReportFlags() {
+	folderPath := "./reports"
+
+	entries, err := os.ReadDir(folderPath)
+
+	if err != nil {
+		fmt.Println("[Orion] Error on read files from reports folder")
+	}
+
+	for _, entry := range entries {
+		filePath := filepath.Join(folderPath, entry.Name())
+		os.Remove(filePath)
+	}
+
+	fmt.Println("[Orion] All Html files has been deleted")
+
+	os.Exit(0)
+}
+
+func folderExists(path string) bool {
+	info, err := os.Stat(path)
+	if err == nil {
+		return info.IsDir()
+	}
+	if errors.Is(err, os.ErrNotExist) {
+		return false
+	}
+
+	return false
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
