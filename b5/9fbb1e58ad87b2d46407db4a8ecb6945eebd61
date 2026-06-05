@@ -1,0 +1,32 @@
+templates/report.html
+  s_47331ce3a5f098::t_14bcea61073e0b 134-135,139-145
+report.go
+  s_47331ce3a5f098::t_15e7d2f5c94343 221-226
+  s_47331ce3a5f098::t_ed19f6dcc1f4fc 54-56,59-64
+  s_47331ce3a5f098::t_5ca03b4dafb971 295-300
+  s_47331ce3a5f098::t_108792f5e0b2cd 293-294,301-302
+  s_47331ce3a5f098::t_1b1de57fb074c4 116-122
+README.md
+  s_47331ce3a5f098::t_444814d16f314a 243-249,267-268,273
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.4",
+  "base_commit_sha": "b59fbb1e58ad87b2d46407db4a8ecb6945eebd61",
+  "prompts": {},
+  "humans": {
+    "h_8051ea80dd241d": {
+      "author": "Marcelo Janke <marcelo.janke@mercadolivre.com>"
+    }
+  },
+  "sessions": {
+    "s_47331ce3a5f098": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dab6c333-33b1-4318-b277-169b365c7fcf",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Marcelo Janke <marcelo.janke@mercadolivre.com>"
+    }
+  }
+}
