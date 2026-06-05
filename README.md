@@ -240,12 +240,13 @@ Ao final, o relatório completo:
   Actual RPS:            199.98 req/s
 ──────────────────────────────────────────────────────────────────
   LATENCY
-  min:                   812 µs
-  p50  (median):         3.21 ms
-  p95:                   18.40 ms
-  p99:                   87.20 ms
-  p99.9:                 412.00 ms
-  max:                   1.823 s
+                         value            reqs ≥ value   reqs = value
+  min:                   812 µs           12000          87
+  p50  (median):         3.21 ms          6000           1240
+  p95:                   18.40 ms         600            89
+  p99:                   87.20 ms         120            14
+  p99.9:                 412.00 ms        12             2
+  max:                   1.823 s          1              1
   mean:                  5.10 ms
 ──────────────────────────────────────────────────────────────────
   ERRORS
@@ -263,9 +264,13 @@ Ao final, o relatório completo:
 | **p95** | 95% das requisições responderam abaixo desse tempo. Bom indicador de experiência do usuário. |
 | **p99** | Só 1% das requisições foi mais lento que isso. Indica cauda longa. |
 | **p99.9** | O pior 0,1%. Revela comportamentos patológicos do servidor (GC pause, pool starvation, etc.). |
+| **reqs ≥ value** | Quantidade aproximada de requisições que demoraram pelo menos aquele tempo (calculado como `total × (1 − percentil/100)`). |
+| **reqs = value** | Quantidade exata de requisições que caíram no mesmo bucket do HDR Histogram para aquela latência. Útil para saber o peso real de cada ponto na distribuição. |
 | **timeout** | Requisições que excederam o `-timeout` configurado. |
 | **http_NNN** | Contagem por código de status HTTP de erro (ex: `http_500`, `http_503`). |
 | **connection_error** | Falhas de transporte: recusa de conexão, reset TCP, DNS falhou. |
+
+O relatório HTML gerado automaticamente em `reports/` exibe as mesmas quatro colunas (Percentile, Latency, Requests ≥ value, Requests = value) na tabela **Latency Distribution**, além dos gráficos de throughput e latência ao longo do tempo.
 
 ---
 

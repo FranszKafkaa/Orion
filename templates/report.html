@@ -131,17 +131,18 @@
         <tr>
           <th>Percentile</th>
           <th style="text-align:right">Latency</th>
-          <th style="text-align:right">Requests (&ge; threshold)</th>
+          <th style="text-align:right">Requests (&ge; value)</th>
+          <th style="text-align:right">Requests = value</th>
         </tr>
       </thead>
       <tbody>
-        <tr><th>min</th><td class="num">{{.LatencyMin}}</td><td class="num req-count">{{.LatencyMinCount}}</td></tr>
-        <tr><th>p50 (median)</th><td class="num">{{.LatencyP50}}</td><td class="num req-count">{{.LatencyP50Count}}</td></tr>
-        <tr><th>p95</th><td class="num">{{.LatencyP95}}</td><td class="num req-count">{{.LatencyP95Count}}</td></tr>
-        <tr><th>p99</th><td class="num">{{.LatencyP99}}</td><td class="num req-count">{{.LatencyP99Count}}</td></tr>
-        <tr><th>p99.9</th><td class="num">{{.LatencyP999}}</td><td class="num req-count">{{.LatencyP999Count}}</td></tr>
-        <tr><th>max</th><td class="num">{{.LatencyMax}}</td><td class="num req-count">{{.LatencyMaxCount}}</td></tr>
-        <tr><th>mean</th><td class="num">{{.LatencyMean}}</td><td class="num req-count">{{.LatencyMeanCount}}</td></tr>
+        <tr><th>min</th><td class="num">{{.LatencyMin}}</td><td class="num req-count">{{.LatencyMinCount}}</td><td class="num req-count">{{.LatencyMinExact}}</td></tr>
+        <tr><th>p50 (median)</th><td class="num">{{.LatencyP50}}</td><td class="num req-count">{{.LatencyP50Count}}</td><td class="num req-count">{{.LatencyP50Exact}}</td></tr>
+        <tr><th>p95</th><td class="num">{{.LatencyP95}}</td><td class="num req-count">{{.LatencyP95Count}}</td><td class="num req-count">{{.LatencyP95Exact}}</td></tr>
+        <tr><th>p99</th><td class="num">{{.LatencyP99}}</td><td class="num req-count">{{.LatencyP99Count}}</td><td class="num req-count">{{.LatencyP99Exact}}</td></tr>
+        <tr><th>p99.9</th><td class="num">{{.LatencyP999}}</td><td class="num req-count">{{.LatencyP999Count}}</td><td class="num req-count">{{.LatencyP999Exact}}</td></tr>
+        <tr><th>max</th><td class="num">{{.LatencyMax}}</td><td class="num req-count">{{.LatencyMaxCount}}</td><td class="num req-count">{{.LatencyMaxExact}}</td></tr>
+        <tr><th>mean</th><td class="num">{{.LatencyMean}}</td><td class="num req-count">{{.LatencyMeanCount}}</td><td class="num req-count">—</td></tr>
       </tbody>
     </table>
   </div>

@@ -51,16 +51,17 @@ func (c *collector) report(cfg *config, elapsed time.Duration) {
 
 	if c.hist.TotalCount() > 0 {
 		section("LATENCY")
-		latencyRow := func(label string, µs int64, count int64) {
-			fmt.Printf("  %-22s %-16s (%d reqs)\n", label, formatµs(µs), count)
+		fmt.Printf("  %-22s %-16s %-14s %s\n", "", "value", "reqs ≥ value", "reqs = value")
+		latencyRow := func(label string, µs int64, above int64, exact int64) {
+			fmt.Printf("  %-22s %-16s %-14d %d\n", label, formatµs(µs), above, exact)
 		}
 		total := c.hist.TotalCount()
-		latencyRow("min:", c.hist.Min(), total)
-		latencyRow("p50  (median):", c.hist.ValueAtQuantile(50), countAtOrAbove(c.hist, total, 50))
-		latencyRow("p95:", c.hist.ValueAtQuantile(95), countAtOrAbove(c.hist, total, 95))
-		latencyRow("p99:", c.hist.ValueAtQuantile(99), countAtOrAbove(c.hist, total, 99))
-		latencyRow("p99.9:", c.hist.ValueAtQuantile(99.9), countAtOrAbove(c.hist, total, 99.9))
-		latencyRow("max:", c.hist.Max(), 1)
+		latencyRow("min:", c.hist.Min(), total, countExact(c.hist, c.hist.Min()))
+		latencyRow("p50  (median):", c.hist.ValueAtQuantile(50), countAtOrAbove(c.hist, total, 50), countExact(c.hist, c.hist.ValueAtQuantile(50)))
+		latencyRow("p95:", c.hist.ValueAtQuantile(95), countAtOrAbove(c.hist, total, 95), countExact(c.hist, c.hist.ValueAtQuantile(95)))
+		latencyRow("p99:", c.hist.ValueAtQuantile(99), countAtOrAbove(c.hist, total, 99), countExact(c.hist, c.hist.ValueAtQuantile(99)))
+		latencyRow("p99.9:", c.hist.ValueAtQuantile(99.9), countAtOrAbove(c.hist, total, 99.9), countExact(c.hist, c.hist.ValueAtQuantile(99.9)))
+		latencyRow("max:", c.hist.Max(), 1, countExact(c.hist, c.hist.Max()))
 		row("mean:", formatµs(int64(c.hist.Mean())))
 	}
 
@@ -111,6 +112,13 @@ type htmlReportData struct {
 	LatencyP999Count int64
 	LatencyMaxCount  int64
 	LatencyMeanCount int64
+
+	LatencyMinExact  int64
+	LatencyP50Exact  int64
+	LatencyP95Exact  int64
+	LatencyP99Exact  int64
+	LatencyP999Exact int64
+	LatencyMaxExact  int64
 
 	HasErrors    bool
 	ErrorRows    []errorRow
@@ -210,6 +218,12 @@ func (c *collector) generateHTMLReport(cfg *config, elapsed time.Duration) (stri
 		LatencyP999Count: reqCount(99.9),
 		LatencyMaxCount:  1,
 		LatencyMeanCount: histTotal,
+		LatencyMinExact:  countExact(c.hist, c.hist.Min()),
+		LatencyP50Exact:  countExact(c.hist, c.hist.ValueAtQuantile(50)),
+		LatencyP95Exact:  countExact(c.hist, c.hist.ValueAtQuantile(95)),
+		LatencyP99Exact:  countExact(c.hist, c.hist.ValueAtQuantile(99)),
+		LatencyP999Exact: countExact(c.hist, c.hist.ValueAtQuantile(99.9)),
+		LatencyMaxExact:  countExact(c.hist, c.hist.Max()),
 		HasErrors:      len(errRows) > 0,
 		ErrorRows:      errRows,
 		HasSnapshots:   len(c.snapshots) > 0,
@@ -275,6 +289,16 @@ func folderExists(path string) bool {
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
+
+// countExact returns the number of recorded values that fall in the same histogram bucket as µs.
+func countExact(hist *hdrhistogram.Histogram, µs int64) int64 {
+	for _, b := range hist.Distribution() {
+		if µs >= b.From && µs <= b.To {
+			return b.Count
+		}
+	}
+	return 0
+}
 
 // countAtOrAbove returns the approximate number of requests at or above the given percentile.
 func countAtOrAbove(_ *hdrhistogram.Histogram, total int64, quantile float64) int64 {
