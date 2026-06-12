@@ -1,0 +1,106 @@
+worker.go
+  s_cdf1802dbbeb54::t_3174395aa63963 34-55,57,59-61,73,75,81,92,99
+main.go
+  s_cdf1802dbbeb54::t_43d11b20160165 18-20,47,52,58-66,98,102,106-107
+  s_7a33b4da38f3a1::t_e6a05f2a94e79d 33,35,41-45
+  s_7a33b4da38f3a1::t_6a83b47152dd1b 21-32,37-40,46,48
+  s_7a33b4da38f3a1::t_4a850eb58aa54e 34,36
+  s_7a33b4da38f3a1::t_a4580206ba51b0 69,71
+  s_1ef2d37997ac03::t_094b12ef524c9d 101,113,124
+  s_7a33b4da38f3a1::t_0121275424ee38 70,72
+  s_cdf1802dbbeb54::t_4b7b0de29acf34 171-183
+  s_7a33b4da38f3a1::t_d2364e1627b3c6 130-134
+config.go
+  s_7a33b4da38f3a1::t_3f3dcbdec790f8 47,49-63
+  s_7a33b4da38f3a1::t_a09f71c8fd5e9e 64-65
+  s_cdf1802dbbeb54::t_9756acc804f134 73-76
+  s_7a33b4da38f3a1::t_5bda501fb0b100 77-78
+  s_cdf1802dbbeb54::t_0dd8ea4ee43cb6 20-30
+  s_7a33b4da38f3a1::t_4c031e97bb3a1f 31-37
+  s_7a33b4da38f3a1::t_37dee4d58ffa04 38-41
+  s_cdf1802dbbeb54::t_a9cfbc5bd01816 125-127,141-151,159-171
+  s_7a33b4da38f3a1::t_a3fc0b30a1ca37 129-139
+  s_7a33b4da38f3a1::t_61fbdd7181aaea 152-158
+browser.go
+  s_7a33b4da38f3a1::t_b46d1a25d21312 1-6,8,10-11,15,22-25,74,78,89,91,94-95,109-110,112,116,119,121-122,125-126,133-134,136,141,143-144,149,151-154,157,191,193-203
+  s_7a33b4da38f3a1::t_0baa2ab9289ede 7,9,12-14,16-21,26-73,75-77,79-88,90,92-93,96-108,111,113-115,117-118,120,123-124,127-132,135,137-140,142,145-148,150,155-156,158-190,192
+templates/browser_vu.html
+  s_7a33b4da38f3a1::t_2c64b0a124f728 1-160
+scenario.go
+  s_cdf1802dbbeb54::t_4f0f3b75395c5c 1-156
+collector.go
+  s_cdf1802dbbeb54::t_bcc898ff35fd88 17-20
+  s_cdf1802dbbeb54::t_b2ec09a596b726 61-62
+  s_7a33b4da38f3a1::t_8b937004c95597 63-64
+  s_1ef2d37997ac03::t_cb5fec79fea6cf 7,14-15,38-44,60,71-72,77-79,93,96-130,132,134-167,169-195,202-203
+  s_cdf1802dbbeb54::t_b527d77e645239 67-68,76,80-82
+  s_7a33b4da38f3a1::t_ec83ec3bedd497 168
+  s_7a33b4da38f3a1::t_a329dbefa235ea 196-201
+templates/report.html
+  s_cdf1802dbbeb54::t_4532503b635c95 162-204
+  s_cdf1802dbbeb54::t_32237e3fb127b6 92
+report.go
+  s_7a33b4da38f3a1::t_5fb45cb6dcdd5e 22
+  s_cdf1802dbbeb54::t_e0cbc466428ab1 65-67,71-73
+  s_1ef2d37997ac03::t_c50deb934e235a 31,37,216,221-223
+  s_7a33b4da38f3a1::t_e0c855554c4fea 90
+  s_1ef2d37997ac03::t_2e8d2d0705aeeb 28-30,64,68-70,175-176,196-197,243,264-265,305-309,311-316,318-319,321-327,340-384
+  s_1ef2d37997ac03::t_dccb725b4b4704 96-113,219-220,224-237,251-261
+  s_cdf1802dbbeb54::t_dd2a475a898bd1 133-135
+  s_cdf1802dbbeb54::t_5c51811891a636 150-162
+  s_1ef2d37997ac03::t_4ffe410f4a5857 163-168,330-339
+  s_cdf1802dbbeb54::t_ab58f621a44788 217
+go.mod
+  s_7a33b4da38f3a1::t_4033895f9012e9 3,6-16
+dashboard.go
+  s_7a33b4da38f3a1::t_839810d4f698ac 15,17-24,28-33,36-40,59-74,76-78,80-88,91,95,102-103,121-125,136,143-153,171,175-176,187,190-191,197-201,203,219,239-240,244-250,253-255,260-262,268,271,275-290,298,302-304,308,320,323-326,328,331,334-336,338,347,349-360,373-378,383,389-390,395
+  s_7a33b4da38f3a1::t_1d0482e133816c 1-14,16,25-27,34-35,41-58,75,79,89-90,92-94,96-101,104-120,126-135,137-142,154-170,172-174,177-186,188-189,192-196,202,204-218,220-238,241-243,251-252,256-259,263-267,269-270,272-274,291-297,299-301,305-307,309-319,321-322,327,329-330,332-333,337,339-346,348,361-372,379-382,384-388,391-394,396
+nvim.log
+  s_02e20f41a1376b::t_7107d98b8b2b6c 1
+  s_02e20f41a1376b::t_1e977b52637713 2
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "4fb7f8fcbb1f92c011cb43c75b83acb0ec8fcee1",
+  "prompts": {},
+  "humans": {
+    "h_8051ea80dd241d": {
+      "author": "Marcelo Janke <marcelo.janke@mercadolivre.com>"
+    }
+  },
+  "sessions": {
+    "s_02e20f41a1376b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ead89-1b52-7e80-a571-cdfa6792a1a6",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Marcelo Janke <marcelo.janke@mercadolivre.com>"
+    },
+    "s_1ef2d37997ac03": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eadba-31b7-7b80-8d23-292834782f8b",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Marcelo Janke <marcelo.janke@mercadolivre.com>"
+    },
+    "s_7a33b4da38f3a1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "aa90bd5b-1d36-4b63-a723-b8804a0f98d1",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Marcelo Janke <marcelo.janke@mercadolivre.com>"
+    },
+    "s_cdf1802dbbeb54": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2fea8e51-5d7e-4fb3-9c7e-e3b1688b741c",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Marcelo Janke <marcelo.janke@mercadolivre.com>"
+    }
+  }
+}
