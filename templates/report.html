@@ -89,7 +89,7 @@
   <header>
     <h1>⚡ Orion</h1>
     <p class="subtitle">Load Test Report</p>
-    <p class="meta">{{.Method}} {{.URL}} &nbsp;·&nbsp; {{.Date}}</p>
+    <p class="meta">{{.Meta}} &nbsp;·&nbsp; {{.Date}}</p>
   </header>
 
   <div class="cards">
@@ -158,6 +158,49 @@
       <div><div class="ck">Timeout</div><div class="cv">{{.Timeout}}</div></div>
     </div>
   </div>
+
+  {{if .HasScenario}}
+  <div class="section">
+    <h2>Endpoint Breakdown</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Method</th>
+          <th>URL</th>
+          <th style="text-align:right">Requests</th>
+          <th style="text-align:right">Success</th>
+          <th style="text-align:right">Success%</th>
+          <th style="text-align:right">p50</th>
+          <th style="text-align:right">p95</th>
+          <th style="text-align:right">p99</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{range .EndpointRows}}
+        <tr>
+          <td>{{.Index}}</td>
+          <td>{{.Method}}</td>
+          <td style="word-break:break-all">{{.URL}}</td>
+          <td class="num">{{.Total}}</td>
+          <td class="num">{{.Success}}</td>
+          <td class="num">{{.SuccRate}}</td>
+          <td class="num">{{.P50}}</td>
+          <td class="num">{{.P95}}</td>
+          <td class="num">{{.P99}}</td>
+        </tr>
+        {{if .Errors}}
+        <tr>
+          <td colspan="9" style="padding-left:2rem;color:#f85149;font-size:.8rem">
+            errors: {{range .Errors}}{{.Key}}={{.Count}} {{end}}
+          </td>
+        </tr>
+        {{end}}
+        {{end}}
+      </tbody>
+    </table>
+  </div>
+  {{end}}
 
   {{if .HasErrors}}
   <div class="section">

@@ -1,0 +1,2 @@
+WRN 2026-06-09T15:44:00.929 c/nvim.39059.0 server_start:197: Failed to start server: operation not permitted: /var/folders/fq/nzr_h6r12jl020836dtk0zhh0000gn/T/nvim.mjanke/gpcikx/nvim.52384.0
+WRN 2026-06-09T15:44:00.954 c/nvim.39059.0 server_start:197: Failed to start server: operation not permitted: /var/folders/fq/nzr_h6r12jl020836dtk0zhh0000gn/T/nvim.mjanke/bB4CX8/nvim.52393.0

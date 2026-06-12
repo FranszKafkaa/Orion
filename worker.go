@@ -31,12 +31,34 @@ func buildClient(rps int) *http.Client {
 }
 
 func runVU(client *http.Client, cfg *config, ch chan<- result) {
-	var bodyReader io.Reader
+	var (
+		method      string
+		rawURL      string
+		body        string
+		headers     http.Header
+		endpointIdx = -1
+	)
 
+	if cfg.selector != nil {
+		idx := cfg.selector()
+		ep := &cfg.scenario.Endpoints[idx]
+		method = ep.Method
+		rawURL = ep.URL
+		body = ep.Body
+		headers = epHeaders(ep, cfg.headers)
+		endpointIdx = idx
+	} else {
+		method = cfg.method
+		rawURL = cfg.url
+		body = cfg.body
+		headers = cfg.headers
+	}
+
+	var bodyReader io.Reader
 	switch {
-	case cfg.body != "":
-		bodyReader = strings.NewReader(cfg.body)
-	case methodHasBody(cfg.method):
+	case body != "":
+		bodyReader = strings.NewReader(body)
+	case methodHasBody(method):
 		uid := vuSeq.Add(1)
 		b, _ := json.Marshal(struct {
 			UserID int64  `json:"user_id"`
@@ -48,35 +70,33 @@ func runVU(client *http.Client, cfg *config, ch chan<- result) {
 	ctx, cancel := context.WithTimeout(context.Background(), cfg.timeout)
 	defer cancel()
 
-	req, err := http.NewRequestWithContext(ctx, cfg.method, cfg.url, bodyReader)
-	//fmt.Println(req)
+	req, err := http.NewRequestWithContext(ctx, method, rawURL, bodyReader)
 	if err != nil {
-		ch <- result{err: err}
+		ch <- result{err: err, endpointIdx: endpointIdx}
 		return
 	}
 	if bodyReader != nil {
 		req.Header.Set("Content-Type", "application/json")
 	}
-	for k, vals := range cfg.headers {
+	for k, vals := range headers {
 		for _, v := range vals {
 			req.Header.Set(k, v)
 		}
 	}
 
 	start := time.Now()
-
 	resp, err := client.Do(req)
 	latency := time.Since(start)
 
 	if err != nil {
-		ch <- result{latency: latency, err: err}
+		ch <- result{latency: latency, err: err, endpointIdx: endpointIdx}
 		return
 	}
 	// Drain body so the underlying TCP connection is returned to the pool.
 	_, _ = io.Copy(io.Discard, resp.Body)
 	resp.Body.Close()
 
-	ch <- result{latency: latency, status: resp.StatusCode}
+	ch <- result{latency: latency, status: resp.StatusCode, endpointIdx: endpointIdx}
 }
 
 func methodHasBody(method string) bool {

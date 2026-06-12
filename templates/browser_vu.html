@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Orion — Browser VU</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #0d1117; color: #c9d1d9;
+    display: flex; align-items: center; justify-content: center; min-height: 100vh;
+  }
+  .card {
+    background: #161b22; border: 1px solid #21262d;
+    border-radius: 12px; padding: 2rem 2.5rem; width: 420px;
+  }
+  h1   { font-size: 1.4rem; color: #00d4aa; }
+  .sub { color: #8b949e; font-size: .82rem; margin: .2rem 0 1.5rem; }
+  .row {
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid #21262d; padding: .45rem 0; font-size: .84rem;
+  }
+  .row:last-of-type { border-bottom: none; }
+  .lbl { color: #8b949e; }
+  .val { font-family: monospace; color: #e6edf3; text-align: right; max-width: 240px;
+         overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bar-bg { background: #21262d; border-radius: 4px; height: 5px; margin: 1.25rem 0 1rem; overflow: hidden; }
+  .bar    { background: #00d4aa; height: 100%; width: 0%; transition: width .8s linear; }
+  .status { text-align: center; font-weight: 600; font-size: .95rem; color: #3fb950; }
+  .done   { color: #58a6ff !important; }
+  .fail   { color: #f85149 !important; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>&#9889; Orion</h1>
+  <p class="sub">Browser Virtual User</p>
+  <div id="rows"></div>
+  <div class="bar-bg"><div class="bar" id="bar"></div></div>
+  <div class="status" id="status">Starting&#8230;</div>
+</div>
+
+<script type="application/json" id="cfg">__CFG_JSON__</script>
+<script>
+const cfg = JSON.parse(document.getElementById('cfg').textContent);
+
+const isScenario = cfg.endpoints && cfg.endpoints.length > 0;
+const eps = isScenario
+  ? cfg.endpoints
+  : [{method: cfg.singleMethod || 'GET', url: cfg.singleUrl,
+      body: cfg.singleBody || '', weight: 1, headers: {}}];
+
+// Build weighted selector
+const totalW = eps.reduce(function(s, e) { return s + (e.weight || 1); }, 0);
+var cumW = [], acc = 0;
+for (var i = 0; i < eps.length; i++) { acc += (eps[i].weight || 1); cumW.push(acc); }
+
+function pickEp() {
+  var r = Math.random() * totalW;
+  for (var i = 0; i < cumW.length; i++) if (r < cumW[i]) return [i, eps[i]];
+  return [eps.length - 1, eps[eps.length - 1]];
+}
+
+// DOM refs
+var statusEl = document.getElementById('status');
+var bar      = document.getElementById('bar');
+var rows     = document.getElementById('rows');
+
+function addRow(lbl, id) {
+  var d = document.createElement('div');
+  d.className = 'row';
+  d.innerHTML = '<span class="lbl">' + lbl + '</span><span class="val" id="' + id + '">&#8212;</span>';
+  rows.appendChild(d);
+}
+
+var thinkLabel = cfg.thinkMaxMs > cfg.thinkMinMs
+  ? (cfg.thinkMinMs + '–' + cfg.thinkMaxMs + ' ms')
+  : (cfg.thinkMinMs > 0 ? cfg.thinkMinMs + ' ms' : 'none');
+
+addRow('Target',       'rTarget');
+addRow('Think time',   'rThink');
+addRow('Duration',     'rDur');
+addRow('Requests',     'rReqs');
+addRow('Errors',       'rErrs');
+addRow('Last status',  'rStat');
+addRow('Last latency', 'rLat');
+
+document.getElementById('rTarget').textContent = eps.length > 1 ? (eps.length + ' endpoints') : eps[0].url;
+document.getElementById('rThink').textContent  = thinkLabel;
+document.getElementById('rDur').textContent    = (cfg.durationMs / 1000).toFixed(0) + ' s';
+
+var reqs = 0, errs = 0;
+
+function sleep(ms) { return new Promise(function(r) { setTimeout(r, ms); }); }
+
+function postMetric(lat, status, idx, err) {
+  return fetch('/metric', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({latency: lat, status: status,
+                          endpointIdx: isScenario ? idx : -1,
+                          error: err || ''}),
+  }).catch(function() {});
+}
+
+async function run() {
+  var start = Date.now();
+  statusEl.textContent = 'Running…';
+
+  while (Date.now() - start < cfg.durationMs) {
+    bar.style.width = Math.min(100, (Date.now() - start) / cfg.durationMs * 100).toFixed(1) + '%';
+
+    var picked  = pickEp();
+    var idx = picked[0], ep = picked[1];
+    var headers = Object.assign({}, cfg.headers || {}, ep.headers || {});
+    var opts = {method: ep.method || 'GET', headers: headers};
+    if (ep.body) {
+      opts.body = ep.body;
+      if (!headers['Content-Type']) headers['Content-Type'] = 'application/json';
+    }
+
+    var t0 = performance.now(), lat = 0, status = 0, errMsg = '';
+    try {
+      var resp = await fetch(ep.url, opts);
+      lat    = performance.now() - t0;
+      status = resp.status;
+      await resp.text();
+    } catch(e) {
+      lat    = performance.now() - t0;
+      errMsg = (e && e.message) ? e.message : 'network_error';
+    }
+
+    reqs++;
+    if (errMsg || status >= 400) errs++;
+
+    document.getElementById('rReqs').textContent = reqs;
+    document.getElementById('rErrs').textContent = errs;
+    document.getElementById('rStat').textContent = errMsg ? errMsg.slice(0, 32) : status;
+    document.getElementById('rLat').textContent  = lat.toFixed(1) + ' ms';
+
+    await postMetric(lat, status, idx, errMsg);
+
+    var think = cfg.thinkMaxMs > cfg.thinkMinMs
+      ? cfg.thinkMinMs + Math.random() * (cfg.thinkMaxMs - cfg.thinkMinMs)
+      : cfg.thinkMinMs;
+    if (think > 0) await sleep(think);
+  }
+
+  bar.style.width = '100%';
+  statusEl.textContent = 'Done ✓';
+  statusEl.className = 'status done';
+}
+
+run().catch(function(e) {
+  statusEl.textContent = 'Error: ' + (e && e.message ? e.message : String(e));
+  statusEl.className = 'status fail';
+});
+</script>
+</body>
+</html>
