@@ -14,6 +14,10 @@ import (
 
 func main() {
 	cfg := parseFlags()
+	if cfg.dashboardLauncher {
+		startDashboardLauncher(cfg.dashboardPort)
+		return
+	}
 
 	numEndpoints := 0
 	if cfg.scenario != nil {

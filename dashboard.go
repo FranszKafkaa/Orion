@@ -14,12 +14,12 @@ import (
 
 // dashUpdate is the JSON payload pushed to the browser via SSE.
 type dashUpdate struct {
-	Elapsed      int     `json:"elapsed,omitempty"`
-	SuccessDelta int64   `json:"successDelta,omitempty"`
-	ErrorDelta   int64   `json:"errorDelta,omitempty"`
-	P50ms        float64 `json:"p50ms,omitempty"`
-	P95ms        float64 `json:"p95ms,omitempty"`
-	P99ms        float64 `json:"p99ms,omitempty"`
+	Elapsed      int     `json:"elapsed"`
+	SuccessDelta int64   `json:"successDelta"`
+	ErrorDelta   int64   `json:"errorDelta"`
+	P50ms        float64 `json:"p50ms"`
+	P95ms        float64 `json:"p95ms"`
+	P99ms        float64 `json:"p99ms"`
 	Done         bool    `json:"done,omitempty"`
 	ReportURL    string  `json:"reportURL,omitempty"`
 }
@@ -217,6 +217,9 @@ func openURL(url string) {
 // ── Dashboard HTML ─────────────────────────────────────────────────────────────
 
 func buildDashPage(meta, mode string, durationSec int64, port int) string {
+	if durationSec < 1 {
+		durationSec = 1
+	}
 	metaJSON, _ := json.Marshal(meta)
 	modeJSON, _ := json.Marshal(mode)
 	return fmt.Sprintf(`<!DOCTYPE html>
@@ -228,71 +231,97 @@ func buildDashPage(meta, mode string, durationSec int64, port int) string {
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-       background:#0d1117;color:#c9d1d9;min-height:100vh}
-  .container{max-width:1200px;margin:0 auto;padding:1.5rem}
-  header{margin-bottom:1.5rem;border-bottom:1px solid #21262d;padding-bottom:1.25rem}
-  header h1{font-size:1.8rem;color:#00d4aa}
-  .meta{color:#8b949e;font-size:.82rem;font-family:monospace;margin-top:.25rem}
-  .bar-bg{background:#21262d;border-radius:4px;height:5px;margin-top:.9rem;overflow:hidden}
-  .bar{background:#00d4aa;height:100%%;width:0%%;transition:width 1s linear}
-  .badge{display:inline-block;margin-left:.75rem;font-size:.7rem;padding:.15rem .55rem;
-         border-radius:99px;vertical-align:middle;font-weight:600}
-  .running{background:#1a3a1a;color:#3fb950}
-  .done{background:#1a2a3a;color:#58a6ff}
-
-  .report-btn{display:none;margin-top:1rem;padding:.5rem 1.1rem;background:#00d4aa;
-              color:#0d1117;border:none;border-radius:6px;font-weight:700;
-              font-size:.9rem;cursor:pointer;text-decoration:none}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0d1117;color:#c9d1d9;min-height:100vh}
+  .container{max-width:1280px;margin:0 auto;padding:2rem 1.5rem}
+  header{display:flex;justify-content:space-between;gap:1.5rem;align-items:flex-end;margin-bottom:1.5rem;border-bottom:1px solid #21262d;padding-bottom:1.5rem}
+  h1{font-size:2rem;color:#00d4aa;letter-spacing:0}
+  .subtitle{color:#8b949e;margin-top:.25rem;font-size:.9rem}
+  .meta{color:#8b949e;font-size:.8rem;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-top:.5rem;word-break:break-all}
+  .status{display:flex;align-items:center;gap:.75rem;justify-content:flex-end;flex-wrap:wrap}
+  .badge{display:inline-flex;align-items:center;gap:.4rem;font-size:.72rem;padding:.22rem .65rem;border-radius:99px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+  .badge:before{content:'';width:.46rem;height:.46rem;border-radius:50%%;background:currentColor}
+  .running{background:#1a3a1a;color:#3fb950}.done{background:#1a2a3a;color:#58a6ff}.lost{background:#3a231f;color:#f85149}
+  .report-btn{display:none;padding:.55rem .9rem;background:#00d4aa;color:#0d1117;border:1px solid #00d4aa;border-radius:6px;font-weight:700;font-size:.85rem;cursor:pointer;text-decoration:none}
   .report-btn:hover{background:#00b894}
-
-  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
-         gap:1rem;margin-bottom:1.5rem}
-  .card{background:#161b22;border:1px solid #21262d;border-radius:8px;padding:1.1rem}
+  .bar-bg{background:#21262d;border-radius:99px;height:7px;margin-bottom:1.5rem;overflow:hidden}
+  .bar{background:#00d4aa;height:100%%;width:0%%;transition:width .35s ease}
+  .cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1rem;margin-bottom:1.5rem}
+  .card,.panel{background:#161b22;border:1px solid #21262d;border-radius:8px}
+  .card{padding:1.1rem}
   .card-label{font-size:.68rem;color:#8b949e;text-transform:uppercase;letter-spacing:.8px}
-  .card-value{font-size:1.55rem;font-weight:700;color:#e6edf3;margin-top:.35rem;
-              font-variant-numeric:tabular-nums}
+  .card-value{font-size:1.5rem;font-weight:700;color:#e6edf3;margin-top:.35rem;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .green{color:#3fb950}.yellow{color:#d29922}.red{color:#f85149}
-
-  .charts{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem}
-  @media(max-width:700px){.charts{grid-template-columns:1fr}}
-  .chart-box{background:#161b22;border:1px solid #21262d;border-radius:8px;padding:1.1rem}
-  .chart-box h2{font-size:.68rem;color:#8b949e;text-transform:uppercase;
-                letter-spacing:.8px;margin-bottom:.9rem}
+  .layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:1.5rem;align-items:start}
+  .charts{display:grid;grid-template-columns:1fr;gap:1.25rem}
+  .panel{padding:1.15rem}
+  .panel-head{display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:1rem}
+  .panel h2{font-size:.7rem;color:#8b949e;text-transform:uppercase;letter-spacing:.8px}
+  .hint{font-size:.78rem;color:#8b949e;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .side{position:sticky;top:1rem;display:grid;gap:1rem}
+  .kv{display:grid;gap:.75rem}
+  .kv-row{border-bottom:1px solid #21262d;padding-bottom:.75rem}
+  .kv-row:last-child{border-bottom:0;padding-bottom:0}
+  .kv-label{font-size:.68rem;color:#8b949e;text-transform:uppercase;letter-spacing:.7px}
+  .kv-value{font-size:.85rem;color:#e6edf3;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-top:.25rem;word-break:break-all}
+  .empty{height:235px;display:grid;place-items:center;color:#30363d;font-size:.85rem;border:1px dashed #30363d;border-radius:8px}
+  canvas{max-height:310px}
   footer{text-align:center;color:#30363d;font-size:.72rem;padding:1.5rem 0 .5rem}
+  @media(max-width:1050px){.layout{grid-template-columns:1fr}.side{position:static}.cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media(max-width:700px){header{display:block}.status{justify-content:flex-start;margin-top:1rem}.cards{grid-template-columns:1fr}.container{padding:1.5rem 1rem}}
 </style>
 </head>
 <body>
 <div class="container">
   <header>
-    <h1>&#9889; Orion <span class="badge running" id="badge">running</span></h1>
-    <p class="meta" id="metaLine"></p>
-    <div class="bar-bg"><div class="bar" id="bar"></div></div>
-    <a class="report-btn" id="reportBtn" target="_blank">View HTML Report &#8599;</a>
+    <div>
+      <h1>Orion</h1>
+      <p class="subtitle">Live Dashboard</p>
+      <p class="meta" id="metaLine"></p>
+    </div>
+    <div class="status">
+      <span class="badge running" id="badge">running</span>
+      <a class="report-btn" id="reportBtn" target="_blank">View HTML Report</a>
+    </div>
   </header>
+  <div class="bar-bg"><div class="bar" id="bar"></div></div>
 
   <div class="cards">
-    <div class="card">
-      <div class="card-label">Total Requests</div>
-      <div class="card-value" id="cTotal">0</div>
-    </div>
-    <div class="card">
-      <div class="card-label">Success Rate</div>
-      <div class="card-value green" id="cRate">—</div>
-    </div>
-    <div class="card">
-      <div class="card-label">RPS (last sec)</div>
-      <div class="card-value" id="cRPS">0</div>
-    </div>
-    <div class="card">
-      <div class="card-label">P99 (last sec)</div>
-      <div class="card-value yellow" id="cP99">—</div>
-    </div>
+    <div class="card"><div class="card-label">Total Requests</div><div class="card-value" id="cTotal">0</div></div>
+    <div class="card"><div class="card-label">Success Rate</div><div class="card-value green" id="cRate">100.0%%</div></div>
+    <div class="card"><div class="card-label">Current RPS</div><div class="card-value" id="cRPS">0</div></div>
+    <div class="card"><div class="card-label">Avg RPS</div><div class="card-value" id="cAvgRPS">0</div></div>
+    <div class="card"><div class="card-label">Errors</div><div class="card-value" id="cErrors">0</div></div>
+    <div class="card"><div class="card-label">p95 Latency</div><div class="card-value yellow" id="cP95">—</div></div>
+    <div class="card"><div class="card-label">p99 Latency</div><div class="card-value yellow" id="cP99">—</div></div>
+    <div class="card"><div class="card-label">Elapsed</div><div class="card-value" id="cElapsed">0s</div></div>
   </div>
 
-  <div class="charts">
-    <div class="chart-box"><h2>Throughput (req/s)</h2><canvas id="rpsChart"></canvas></div>
-    <div class="chart-box"><h2>Latency Percentiles (ms)</h2><canvas id="latChart"></canvas></div>
+  <div class="layout">
+    <main class="charts">
+      <section class="panel">
+        <div class="panel-head"><h2>Throughput (req/s)</h2><span class="hint" id="lastTick">waiting</span></div>
+        <canvas id="rpsChart"></canvas>
+      </section>
+      <section class="panel">
+        <div class="panel-head"><h2>Latency Percentiles (ms)</h2><span class="hint">windowed</span></div>
+        <canvas id="latChart"></canvas>
+      </section>
+    </main>
+    <aside class="side">
+      <section class="panel">
+        <div class="panel-head"><h2>Test</h2><span class="hint">port %d</span></div>
+        <div class="kv">
+          <div class="kv-row"><div class="kv-label">Target</div><div class="kv-value" id="targetLine"></div></div>
+          <div class="kv-row"><div class="kv-label">Mode</div><div class="kv-value" id="modeLine"></div></div>
+          <div class="kv-row"><div class="kv-label">Duration</div><div class="kv-value" id="durationLine"></div></div>
+          <div class="kv-row"><div class="kv-label">Report</div><div class="kv-value" id="reportState">pending</div></div>
+        </div>
+      </section>
+      <section class="panel">
+        <div class="panel-head"><h2>Stream</h2><span class="hint" id="streamState">connected</span></div>
+        <div class="empty" id="streamEmpty">awaiting first snapshot</div>
+      </section>
+    </aside>
   </div>
 
   <footer>Orion Live Dashboard &nbsp;·&nbsp; port %d</footer>
@@ -301,9 +330,13 @@ func buildDashPage(meta, mode string, durationSec int64, port int) string {
 <script>
 const META = %s;
 const MODE = %s;
-const DUR  = %d;
+const DUR  = Math.max(1, Number(%d) || 1);
 
-document.getElementById('metaLine').textContent = META + '  ·  ' + MODE + '  ·  ' + DUR + 's';
+const el = id => document.getElementById(id);
+el('metaLine').textContent = META + '  ·  ' + MODE + '  ·  ' + DUR + 's';
+el('targetLine').textContent = META;
+el('modeLine').textContent = MODE;
+el('durationLine').textContent = DUR + 's';
 
 const grid='rgba(48,54,61,0.7)', tick='#8b949e';
 const baseScales = {
@@ -315,6 +348,7 @@ const baseOpts = {
   interaction:{mode:'index',intersect:false},
   plugins:{legend:{labels:{color:tick,boxWidth:10,padding:12}}},
   scales:baseScales,
+  maintainAspectRatio:false,
 };
 
 const rpsChart = new Chart(document.getElementById('rpsChart'), {
@@ -339,58 +373,81 @@ const latChart = new Chart(document.getElementById('latChart'), {
     y:{...baseScales.y,title:{display:true,text:'ms',color:tick}}}},
 });
 
-let totalReqs=0, totalSuccess=0;
+let totalReqs=0, totalSuccess=0, totalErrors=0, firstSnapshot=false;
 
-function fmt(n){return n>=1000?(n/1000).toFixed(1)+'k':String(n)}
+function num(v){ const n = Number(v); return Number.isFinite(n) ? n : 0; }
+function fmt(n){ n=num(n); return n>=1000000?(n/1000000).toFixed(1)+'m':n>=1000?(n/1000).toFixed(1)+'k':String(Math.round(n)); }
+function ms(v){ v=num(v); return v > 0 ? v.toFixed(1)+' ms' : '—'; }
+function pushLimited(chart, label, values){
+  chart.data.labels.push(label);
+  values.forEach((v,i)=>chart.data.datasets[i].data.push(v));
+  if(chart.data.labels.length > 90){
+    chart.data.labels.shift();
+    chart.data.datasets.forEach(ds=>ds.data.shift());
+  }
+  chart.update('none');
+}
 
 const es = new EventSource('/events');
 es.onmessage = function(e) {
   const d = JSON.parse(e.data);
 
   if (d.done) {
-    document.getElementById('badge').textContent = 'done';
-    document.getElementById('badge').className   = 'badge done';
-    document.getElementById('bar').style.width   = '100%%';
+    el('badge').textContent = 'done';
+    el('badge').className   = 'badge done';
+    el('bar').style.width   = '100%%';
+    el('streamState').textContent = 'complete';
     return;
   }
 
   if (d.reportURL) {
-    const btn = document.getElementById('reportBtn');
+    const btn = el('reportBtn');
     btn.href  = d.reportURL;
     btn.style.display = 'inline-block';
+    el('reportState').textContent = 'ready';
     es.close();
     return;
   }
 
-  totalReqs    += d.successDelta + d.errorDelta;
-  totalSuccess += d.successDelta;
+  const success = num(d.successDelta);
+  const errors = num(d.errorDelta);
+  const elapsed = Math.max(0, num(d.elapsed));
+  const rps = success + errors;
 
-  document.getElementById('cTotal').textContent = fmt(totalReqs);
-  document.getElementById('cRPS').textContent   = d.successDelta + d.errorDelta;
-  document.getElementById('cP99').textContent   = d.p99ms > 0 ? d.p99ms.toFixed(1)+' ms' : '—';
+  totalReqs    += rps;
+  totalSuccess += success;
+  totalErrors  += errors;
+  firstSnapshot = true;
+  el('streamEmpty').textContent = 'receiving snapshots';
+  el('lastTick').textContent = elapsed + 's';
+
+  el('cTotal').textContent = fmt(totalReqs);
+  el('cRPS').textContent   = fmt(rps);
+  el('cAvgRPS').textContent = elapsed > 0 ? (totalReqs / elapsed).toFixed(1) : '0';
+  el('cErrors').textContent = fmt(totalErrors);
+  el('cP95').textContent   = ms(d.p95ms);
+  el('cP99').textContent   = ms(d.p99ms);
+  el('cElapsed').textContent = elapsed + 's';
 
   const pct = totalReqs > 0 ? totalSuccess/totalReqs*100 : 100;
-  const rateEl = document.getElementById('cRate');
+  const rateEl = el('cRate');
   rateEl.textContent  = pct.toFixed(1)+'%%';
   rateEl.className    = 'card-value '+(pct>=99?'green':pct>=95?'yellow':'red');
 
-  const lbl = d.elapsed+'s';
-  rpsChart.data.labels.push(lbl);
-  rpsChart.data.datasets[0].data.push(d.successDelta);
-  rpsChart.data.datasets[1].data.push(d.errorDelta);
-  rpsChart.update('none');
+  const lbl = elapsed+'s';
+  pushLimited(rpsChart, lbl, [success, errors]);
+  pushLimited(latChart, lbl, [num(d.p50ms)||null, num(d.p95ms)||null, num(d.p99ms)||null]);
 
-  latChart.data.labels.push(lbl);
-  latChart.data.datasets[0].data.push(d.p50ms||null);
-  latChart.data.datasets[1].data.push(d.p95ms||null);
-  latChart.data.datasets[2].data.push(d.p99ms||null);
-  latChart.update('none');
-
-  document.getElementById('bar').style.width =
-    Math.min(100, d.elapsed/DUR*100).toFixed(1)+'%%';
+  el('bar').style.width = Math.min(100, elapsed/DUR*100).toFixed(1)+'%%';
 };
-es.onerror = function(){ es.close(); };
+es.onerror = function(){
+  if (!firstSnapshot) el('streamEmpty').textContent = 'stream disconnected';
+  el('streamState').textContent = 'disconnected';
+  el('badge').textContent = 'offline';
+  el('badge').className = 'badge lost';
+  es.close();
+};
 </script>
 </body>
-</html>`, port, metaJSON, modeJSON, durationSec)
+</html>`, port, port, metaJSON, modeJSON, durationSec)
 }
