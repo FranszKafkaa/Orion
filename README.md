@@ -98,6 +98,8 @@ orion -url <endpoint> [flags]
 | `-token` | string | — | Bearer token → `Authorization: Bearer <token>` |
 | `-basic` | string | — | Basic auth no formato `usuario:senha` |
 | `-H` | string | — | Header HTTP customizado no formato `Chave: Valor` (repetível) |
+| `-dashboard` | bool | `false` | Abre o dashboard ao vivo no browser durante o teste |
+| `-dashboard-port` | int | `9191` | Porta local do servidor do dashboard |
 
 #### Formatos aceitos para `-duration` e `-timeout`
 
@@ -203,6 +205,20 @@ orion -url http://api.example.com/slow-endpoint \
 
 Qualquer requisição que demore mais de 500 ms é contabilizada como `timeout` no relatório.
 
+### Com dashboard ao vivo
+
+```bash
+orion -url http://api.example.com/checkout -rps 200 -duration 2m -dashboard
+```
+
+Abre automaticamente `http://localhost:9191/` no browser com métricas em tempo real. Ao final do teste o botão **View HTML Report** aparece no próprio dashboard.
+
+Para usar outra porta (ex: se 9191 já estiver ocupada):
+
+```bash
+orion -url http://api.example.com/checkout -rps 200 -dashboard -dashboard-port 8888
+```
+
 ### Interromper antes do tempo
 
 Pressione `Ctrl+C` a qualquer momento. A injeção para imediatamente, as requisições em voo são drenadas e o relatório final é impresso normalmente.
@@ -271,6 +287,55 @@ Ao final, o relatório completo:
 | **connection_error** | Falhas de transporte: recusa de conexão, reset TCP, DNS falhou. |
 
 O relatório HTML gerado automaticamente em `reports/` exibe as mesmas quatro colunas (Percentile, Latency, Requests ≥ value, Requests = value) na tabela **Latency Distribution**, além dos gráficos de throughput e latência ao longo do tempo.
+
+---
+
+## Dashboard ao vivo
+
+Adicione `-dashboard` a qualquer comando para abrir uma interface web em tempo real durante o teste.
+
+```bash
+orion -url http://api.example.com/checkout -rps 200 -duration 2m -dashboard
+```
+
+O browser abre automaticamente em `http://localhost:9191/`. As métricas são enviadas via **Server-Sent Events (SSE)** — sem WebSocket, sem polling.
+
+### O que é exibido
+
+**Cards de resumo** (atualizam a cada segundo):
+
+| Card | Descrição |
+|---|---|
+| Total Requests | Requisições acumuladas desde o início |
+| Success Rate | Percentual de sucesso — verde ≥ 99%, amarelo ≥ 95%, vermelho abaixo disso |
+| Current RPS | Requisições enviadas no último segundo |
+| Avg RPS | Média de RPS desde o início do teste |
+| Errors | Total de erros acumulados |
+| p95 Latency | Latência do percentil 95 da janela atual (ms) |
+| p99 Latency | Latência do percentil 99 da janela atual (ms) |
+| Elapsed | Tempo decorrido desde o início |
+
+**Gráficos** (janela deslizante de 90 segundos):
+- **Throughput (req/s)** — success/s (verde) e errors/s (vermelho)
+- **Latency Percentiles (ms)** — p50, p95 e p99 ao longo do tempo
+
+**Painel lateral:**
+- Endpoint/cenário alvo
+- Modo (RPS ou VUs de browser)
+- Duração configurada
+- Status do relatório HTML (pending → ready)
+
+### Ciclo de vida
+
+```
+teste inicia → dashboard abre no browser → métricas chegam via SSE a cada 1s
+     ↓
+teste termina → badge muda para "done" → relatório HTML é gerado
+     ↓
+botão "View HTML Report" aparece → servidor fica ativo por 2 min → shutdown automático
+```
+
+Se o browser for aberto depois do início do teste, a conexão recebe todo o histórico de snapshots de uma vez (catch-up) e então continua recebendo atualizações ao vivo.
 
 ---
 

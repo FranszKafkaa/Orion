@@ -54,7 +54,7 @@ func runBrowserMode(cfg *config, col *collector, ctx context.Context) time.Durat
 	if err := chromedp.Run(browserCtx, chromedp.Navigate("about:blank")); err != nil {
 		fmt.Printf("[Orion] failed to launch Chrome: %v\n", err)
 		fmt.Println("[Orion] Make sure Google Chrome or Chromium is installed.")
-		<-ctx.Done()
+		fmt.Println("[Orion] Tip: for plain HTTP load testing, remove the -browser flag.")
 		return time.Since(start).Truncate(time.Millisecond)
 	}
 	fmt.Printf("[Orion] Chrome launched — %d VU goroutines running\n", cfg.browserN)
