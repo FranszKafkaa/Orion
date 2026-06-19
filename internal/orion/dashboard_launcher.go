@@ -1,4 +1,4 @@
-package main
+package orion
 
 import (
 	_ "embed"
@@ -324,4 +324,3 @@ func buildLauncherPage(port int) string {
 	}
 	return buf.String()
 }
-

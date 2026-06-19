@@ -26,7 +26,7 @@ VU3:     ▶────◀▶────◀          Tick 3ms:  ▶ lança VU3
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│                          main goroutine                          │
+│                      internal/orion runner                       │
 │  time.Ticker (1/RPS) ──► spawn VU goroutine  ──► wg.Add(1)      │
 └────────────────────────────────┬─────────────────────────────────┘
                                  │ N goroutines simultâneas
@@ -68,14 +68,27 @@ VU3:     ▶────◀▶────◀          Tick 3ms:  ▶ lança VU3
 git clone <repo>
 cd Orion
 go mod tidy
-go build -o orion .
+go build -o orion ./cmd/orion
 ```
 
 Ou execute diretamente sem compilar:
 
 ```bash
-go run . -url http://localhost:8080/api/checkout -rps 100
+go run ./cmd/orion -url http://localhost:8080/api/checkout -rps 100
 ```
+
+---
+
+## Estrutura do projeto
+
+```
+cmd/orion/              entrypoint CLI
+internal/orion/         implementação da ferramenta
+internal/orion/templates/ templates HTML do relatório, dashboard e browser VU
+reports/                relatórios HTML gerados localmente
+```
+
+O root fica reservado para metadados do módulo, documentação e binários locais ignorados pelo Git. A lógica de execução, coleta, cenários, dashboard, browser mode e simulação de IP fica em `internal/orion`.
 
 ---
 
@@ -98,6 +111,9 @@ orion -url <endpoint> [flags]
 | `-token` | string | — | Bearer token → `Authorization: Bearer <token>` |
 | `-basic` | string | — | Basic auth no formato `usuario:senha` |
 | `-H` | string | — | Header HTTP customizado no formato `Chave: Valor` (repetível) |
+| `-client-ip-list` | string | — | Lista de IPs separados por vírgula para simular IP de cliente via headers |
+| `-client-ip-cidr` | string | — | CIDR IPv4 para gerar IPs simulados, por exemplo `10.20.0.0/24` |
+| `-client-ip-headers` | string | `X-Forwarded-For,X-Real-IP` | Headers preenchidos com o IP simulado |
 | `-dashboard` | bool | `false` | Abre o dashboard ao vivo no browser durante o teste |
 | `-dashboard-port` | int | `9191` | Porta local do servidor do dashboard |
 
@@ -193,6 +209,33 @@ orion -url http://api.example.com/checkout \
 ```
 
 A flag `-H` pode ser repetida quantas vezes for necessário.
+
+### Simulando IPs de clientes atrás de proxy
+
+```bash
+orion -url http://api.example.com/checkout \
+      -token eyJ... \
+      -client-ip-cidr 10.20.0.0/24 \
+      -rps 300 \
+      -duration 5m
+```
+
+Isso não altera o IP TCP real da máquina que está executando o Orion. A ferramenta rotaciona headers como `X-Forwarded-For` e `X-Real-IP`, que é o caminho correto para testar aplicações que ficam atrás de proxy, ingress ou load balancer e usam esses headers para identificar o IP original do cliente.
+
+Também é possível informar uma lista explícita:
+
+```bash
+orion -url http://api.example.com/checkout \
+      -client-ip-list 203.0.113.10,203.0.113.11,203.0.113.12
+```
+
+Se sua aplicação usa outro header, ajuste:
+
+```bash
+orion -url http://api.example.com/checkout \
+      -client-ip-cidr 10.20.0.0/24 \
+      -client-ip-headers X-Forwarded-For,CF-Connecting-IP
+```
 
 ### Timeout agressivo para detectar degradação
 
@@ -395,7 +438,7 @@ Na prática, isso limita o throughput útil a **~1.000–2.000 RPS** antes de o 
 **Opção 1 — compilar para Linux e rodar dentro da VM (zero overhead de rede):**
 
 ```bash
-GOOS=linux GOARCH=arm64 go build -o orion-linux-arm64 .
+GOOS=linux GOARCH=arm64 go build -o orion-linux-arm64 ./cmd/orion
 colima ssh -- /tmp/orion-linux-arm64 -url http://localhost:8080/clubes -rps 5000 -duration 60s
 ```
 

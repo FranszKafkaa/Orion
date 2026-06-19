@@ -1,4 +1,4 @@
-package main
+package orion
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-func main() {
+func Main() {
 	cfg := parseFlags()
 	if cfg.dashboardLauncher {
 		startDashboardLauncher(cfg.dashboardPort)
@@ -187,6 +187,10 @@ func printBanner(cfg *config) {
 	}
 	for k, vals := range cfg.headers {
 		fmt.Printf("[Orion] header    %s: %s\n", k, strings.Join(vals, ", "))
+	}
+	if cfg.clientIPs != nil {
+		fmt.Printf("[Orion] client-ip simulation  %d IPs via %s\n",
+			len(cfg.clientIPs.ips), strings.Join(cfg.clientIPs.headers, ", "))
 	}
 	fmt.Println("[Orion] Ctrl+C stops injection early and still prints the report.")
 }

@@ -1,4 +1,4 @@
-package main
+package orion
 
 import (
 	"bytes"
@@ -83,6 +83,7 @@ func runVU(client *http.Client, cfg *config, ch chan<- result) {
 			req.Header.Set(k, v)
 		}
 	}
+	cfg.clientIPs.apply(req.Header)
 
 	start := time.Now()
 	resp, err := client.Do(req)

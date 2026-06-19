@@ -1,4 +1,4 @@
-package main
+package orion
 
 import (
 	"encoding/base64"
@@ -25,6 +25,7 @@ type config struct {
 	dur          time.Duration
 	timeout      time.Duration
 	headers      http.Header
+	clientIPs    *clientIPSimulator
 	scenario     *Scenario
 	selector     func() int
 	maxErrorRate float64
@@ -55,6 +56,9 @@ func parseFlags() *config {
 	timeoutFlag := flag.Duration("timeout", 5*time.Second, "per-request hard deadline")
 	tokenFlag := flag.String("token", "", "Bearer token → Authorization: Bearer <token>")
 	basicFlag := flag.String("basic", "", "Basic auth as user:pass")
+	clientIPListFlag := flag.String("client-ip-list", "", "comma-separated client IPs to rotate through X-Forwarded-For/X-Real-IP")
+	clientIPCIDRFlag := flag.String("client-ip-cidr", "", "IPv4 CIDR used to generate rotated client IP headers (for proxy-aware apps)")
+	clientIPHeadersFlag := flag.String("client-ip-headers", "X-Forwarded-For,X-Real-IP", "comma-separated header names used for simulated client IPs")
 	scenarioFlag := flag.String("scenario", "", "path to JSON scenario file (overrides -url/-method/-body)")
 	maxErrRateFlag := flag.Float64("max-error-rate", 0, "adaptive rate: reduce RPS when error % exceeds this (0 = disabled)")
 	browserFlag := flag.Bool("browser", false, "run in browser VU mode (opens real browser tabs)")
@@ -73,6 +77,7 @@ func parseFlags() *config {
 		fmt.Fprintln(os.Stderr, "\nExamples:")
 		fmt.Fprintln(os.Stderr, "  carga -url http://localhost:8080/clubes -method GET -rps 200 -duration 60s")
 		fmt.Fprintln(os.Stderr, "  carga -url http://api/order -body '{\"item\":\"book\"}' -token eyJ... -rps 50")
+		fmt.Fprintln(os.Stderr, "  carga -url http://api/checkout -client-ip-cidr 10.20.0.0/24 -rps 500")
 		fmt.Fprintln(os.Stderr, "  carga -url http://api/checkout -rps 500 -ramp-up 30s -duration 90s -max-error-rate 5")
 		fmt.Fprintln(os.Stderr, "  carga -scenario scenario.json -rps 200 -duration 60s")
 		fmt.Fprintln(os.Stderr, "  carga -browser -users 20 -duration 60s -think-time 1s -url http://api/checkout")
@@ -126,6 +131,11 @@ func parseFlags() *config {
 		}
 		headers.Set(strings.TrimSpace(parts[0]), strings.TrimSpace(parts[1]))
 	}
+	clientIPs, err := newClientIPSimulator(*clientIPListFlag, *clientIPCIDRFlag, *clientIPHeadersFlag)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		os.Exit(1)
+	}
 
 	if *maxErrRateFlag < 0 || *maxErrRateFlag >= 100 {
 		fmt.Fprintln(os.Stderr, "error: -max-error-rate must be between 0 and 100")
@@ -153,6 +163,7 @@ func parseFlags() *config {
 		dur:               *durFlag,
 		timeout:           *timeoutFlag,
 		headers:           headers,
+		clientIPs:         clientIPs,
 		maxErrorRate:      *maxErrRateFlag,
 		browser:           *browserFlag,
 		browserN:          *usersFlag,
