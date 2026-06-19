@@ -1,0 +1,45 @@
+internal/orion/app.go
+  s_4f4ebcbf9b2609::t_c8f202d498f89e 15
+  s_4f4ebcbf9b2609::t_4eeb33e7674704 1,191-194
+internal/orion/dashboard_launcher.go
+  s_4f4ebcbf9b2609::t_4eeb33e7674704 1-326
+internal/orion/ip_simulation_test.go
+  s_4f4ebcbf9b2609::t_4eeb33e7674704 1-53
+internal/orion/ip_simulation.go
+  s_4f4ebcbf9b2609::t_4eeb33e7674704 1-126
+internal/orion/worker.go
+  s_4f4ebcbf9b2609::t_4eeb33e7674704 1,86
+internal/orion/config.go
+  s_4f4ebcbf9b2609::t_4eeb33e7674704 1,28,59-61,80,134-138,166
+internal/orion/browser.go
+  s_4f4ebcbf9b2609::t_4eeb33e7674704 1-203
+internal/orion/report.go
+  s_4f4ebcbf9b2609::t_4eeb33e7674704 1-419
+cmd/orion/main.go
+  s_4f4ebcbf9b2609::t_c8f202d498f89e 1-7
+README.md
+  s_4f4ebcbf9b2609::t_07927d5693ceb1 29,71,77,82-94,441
+  s_4f4ebcbf9b2609::t_65d03d6ac8690a 114-116,213-238
+internal/orion/scenario.go
+  s_4f4ebcbf9b2609::t_4eeb33e7674704 1-156
+internal/orion/collector.go
+  s_4f4ebcbf9b2609::t_4eeb33e7674704 1-217
+internal/orion/dashboard.go
+  s_4f4ebcbf9b2609::t_4eeb33e7674704 1-549
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "cba2abee43332f96b1214b493a25bb3e9a1acbdf",
+  "prompts": {},
+  "sessions": {
+    "s_4f4ebcbf9b2609": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eadc1-85d8-7732-84c7-dfe03d0495ce",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Marcelo Janke <marcelo.janke@mercadolivre.com>"
+    }
+  }
+}
